@@ -47,11 +47,19 @@ async function track1() {
         let kbt = t % (1<<(15)) / (1<<(15));
         let kick = (0.02/(kbt+0.01))**2 * sn(sn(kbt * (3<<2))) * 0.25;
 
-        // base line
-        let prog = [1, 3/4, 2/3, 1/2, 5/9, 7/9, 2/3, 3/4][(t>>16)%8];
+        // bass line
+        let vari = (t>>16)%16 < 8? 2 : 3
+        let vari2 = (t>>16)%16 < 8? 2/3 : 7/9
+        let prog = [1/2, 3/4, 2/3, vari2, (5+2-vari)/9, 7/9, 2/3, vari/4][(t>>16)%8];
         let len = [2, 1, 2, 2, 4, 1, 2, 2][(t>>16)%8];
         let rbb = t % (1<<(12+len)) / (1<<(12 + len));
-        let base = (1-rbb)**3 * sn(rbt * (1<<5) * prog)**12 * .5;
+        let rbb2 = t % (1<<(12+4)) / (1<<(12+4));
+        let rbb3 = t % (1<<(12+3)) / (1<<(12+3));
+        let bass = 
+            (1-rbb)**3 
+            * sn(rbt * (1<<5) * prog)**12 
+            * .7
+            * (1 - rbb3*.25 - rbb2*.25)**3 ;
 
         // harmony
         let hrog1 = [1, 2/3, 5/9, 2/3][(t>>18)%4]; // higher
@@ -73,12 +81,18 @@ async function track1() {
         const rv = 1;
         let reverb = (t > rv? data[t-rv] * 0.6 : 0);
 
+        
+        let losc1 = max( (t>>25)%2, 1 );
+        let losc2 = max( (t>>24)%4, 1 );
+        let losc3 = max( (t>>23)%3, 1 );
+
+
         data[t] = 0
             + hit
             + kick 
-            + base 
-            + hum1 + hum2
-            + hum3 + hum4
+            + bass 
+            + (hum1 + hum2) * losc3
+            + (hum3 + hum4) * losc2
             // + reverb
         ;
 
@@ -95,9 +109,6 @@ async function track1() {
     musicSource.connect(master);
     musicSource.start();
     
-    // --- arguments --- //
-
-    
     // let speakers = [
         //     { lang: 'en-US',    interval: bfreq*2 + Math.random() * 6000 },
         //     { lang: 'en-UK',    interval: bfreq*2 + Math.random() * 6000 },
@@ -110,7 +121,7 @@ async function track1() {
 
     let speakers = speechSynthesis.getVoices().map(voice => ({
         lang: voice.lang,
-        interval: 100 * (Math.random() + 1),
+        interval: 1200 * (Math.random() + 1),
     }));
     // normalize for number of speakers
     for(let speaker of speakers) {
@@ -120,24 +131,17 @@ async function track1() {
     document.body.querySelector("footer>textarea").value = (speakers.map(sp => `${sp.lang}, ${sp.interval}`).join("\n\n"));
 
     let words = [
-        "hello",
-        "no",
-        "what",
-        "how",
-        "there",
-        "Es gibt im Moment in diese Mannschaft, oh, einige Spieler vergessen",
-        "Zeitungen, aber ich habe gehört viele Situationen. Erstens: wir",
-        "Mannschaft spielt offensiv und die Name offensiv wie Bayern.",
-        "und dann Zickler. Wir müssen nicht vergessen Zickler. Zickler",
-        "Wörter, ist möglich verstehen, was ich hab gesagt? Danke. Offensiv",
-        "habe erklärt mit diese zwei Spieler: nach Dortmund brauchen vielleicht",
-        "gesehen in Europa nach diese Mittwoch. Ich habe gesehen auch",
-        "Trainer sei sehen was passieren in Platz. In diese Spiel es waren",
-        "leer! Haben Sie gesehen Mittwoch, welche Mannschaft hat gespielt",
-        "hat gespielt Trapattoni? Diese Spieler beklagen mehr als sie",
-        "nicht diese Spieler? Weil wir haben gesehen viele Male solche",
+        "void",
+        "destruction",
+        "blood",
+        "elimination",
+        "pain",
+        "dissolve",
+        "into",
+        "abstraction"
     ];
-    words = words.concat((new Array(10)).fill(0).map((v, i) => i).map(v => `${v}`));
+    // array of numbers 0-12 ?
+    // words = words.concat((new Array(13)).fill(0).map((v, i) => `${i}`));
 
     let speak = (speaker) => {
         let text = `${words[~~(Math.random() * words.length)]}${Math.random < 0.25? "?" : ""}`;
@@ -175,3 +179,28 @@ window.onload = () => {
         })
     }
 }
+
+
+
+// old words 
+
+/*
+
+        "hello",
+        "no",
+        "what",
+        "how",
+        "there",
+        "Es gibt im Moment in diese Mannschaft, oh, einige Spieler vergessen",
+        "Zeitungen, aber ich habe gehört viele Situationen. Erstens: wir",
+        "Mannschaft spielt offensiv und die Name offensiv wie Bayern.",
+        "und dann Zickler. Wir müssen nicht vergessen Zickler. Zickler",
+        "Wörter, ist möglich verstehen, was ich hab gesagt? Danke. Offensiv",
+        "habe erklärt mit diese zwei Spieler: nach Dortmund brauchen vielleicht",
+        "gesehen in Europa nach diese Mittwoch. Ich habe gesehen auch",
+        "Trainer sei sehen was passieren in Platz. In diese Spiel es waren",
+        "leer! Haben Sie gesehen Mittwoch, welche Mannschaft hat gespielt",
+        "hat gespielt Trapattoni? Diese Spieler beklagen mehr als sie",
+        "nicht diese Spieler? Weil wir haben gesehen viele Male solche",
+
+*/
